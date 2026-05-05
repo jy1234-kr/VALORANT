@@ -1,1 +1,25 @@
-Nothing needs to be added to .gitignore since only a single HTML file was added without any build artifacts, dependencies, or temporary files.
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build output
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local

@@ -1,0 +1,1738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VALORANT WEB - Tactical FPS</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0F1923;
+      color: #ECE8E1;
+      overflow: hidden;
+    }
+
+    #game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #game-canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* MAIN MENU */
+    #main-menu {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #0F1923 0%, #1F2731 50%, #0F1923 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .logo {
+      font-size: 4rem;
+      font-weight: 900;
+      letter-spacing: 8px;
+      margin-bottom: 3rem;
+    }
+
+    .logo span {
+      color: #FF4655;
+    }
+
+    .menu-btn {
+      width: 280px;
+      padding: 18px 40px;
+      margin: 10px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      background: transparent;
+      border: 2px solid #FF4655;
+      color: #ECE8E1;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+    }
+
+    .menu-btn:hover {
+      background: #FF4655;
+      transform: scale(1.05);
+    }
+
+    .menu-btn.primary {
+      background: #FF4655;
+    }
+
+    .menu-btn.primary:hover {
+      background: #ff6b77;
+    }
+
+    /* LOBBY */
+    #lobby-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #0F1923;
+      display: none;
+      flex-direction: column;
+      padding: 2rem;
+      z-index: 90;
+    }
+
+    .lobby-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .lobby-title {
+      font-size: 2rem;
+      font-weight: 700;
+    }
+
+    .room-list {
+      flex: 1;
+      background: #1F2731;
+      border-radius: 8px;
+      padding: 1rem;
+      overflow-y: auto;
+    }
+
+    .room-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      margin: 0.5rem 0;
+      background: #2a3741;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .room-item:hover {
+      background: #3d4a55;
+    }
+
+    .room-info {
+      display: flex;
+      gap: 2rem;
+    }
+
+    .room-name {
+      font-weight: 600;
+      min-width: 150px;
+    }
+
+    .room-map {
+      color: #888;
+    }
+
+    .room-players {
+      color: #FF4655;
+    }
+
+    .join-btn {
+      padding: 8px 24px;
+      background: #FF4655;
+      border: none;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .create-room-btn {
+      padding: 12px 32px;
+      background: #FF4655;
+      border: none;
+      color: white;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      border-radius: 4px;
+      margin-top: 1rem;
+    }
+
+    /* AGENT SELECT */
+    #agent-select {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #0F1923;
+      display: none;
+      flex-direction: column;
+      z-index: 80;
+    }
+
+    .agent-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem 2rem;
+      background: #1F2731;
+    }
+
+    .agent-timer {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #FF4655;
+    }
+
+    .agent-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 1rem;
+      padding: 2rem;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .agent-card {
+      aspect-ratio: 3/4;
+      background: #1F2731;
+      border: 2px solid #2a3741;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .agent-card:hover {
+      border-color: #FF4655;
+      transform: translateY(-4px);
+    }
+
+    .agent-card.selected {
+      border-color: #FF4655;
+      box-shadow: 0 0 20px rgba(255, 70, 85, 0.4);
+    }
+
+    .agent-card.locked {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .agent-portrait {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      background: linear-gradient(180deg, #2a3741 0%, #1F2731 100%);
+    }
+
+    .agent-name {
+      padding: 0.75rem;
+      text-align: center;
+      font-weight: 600;
+      background: #0F1923;
+    }
+
+    .agent-role {
+      font-size: 0.75rem;
+      color: #888;
+      text-transform: uppercase;
+    }
+
+    .agent-footer {
+      display: flex;
+      justify-content: center;
+      padding: 2rem;
+      gap: 2rem;
+    }
+
+    .lock-in-btn {
+      padding: 16px 64px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      background: #FF4655;
+      border: none;
+      color: white;
+      cursor: pointer;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .lock-in-btn:disabled {
+      background: #3d4a55;
+      cursor: not-allowed;
+    }
+
+    /* BUY MENU */
+    #buy-menu {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 25, 35, 0.95);
+      display: none;
+      flex-direction: column;
+      z-index: 70;
+    }
+
+    .buy-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem 2rem;
+      background: #1F2731;
+    }
+
+    .buy-credits {
+      font-size: 1.5rem;
+      color: #FFD700;
+    }
+
+    .buy-content {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .buy-categories {
+      width: 160px;
+      background: #1F2731;
+      padding: 1rem;
+    }
+
+    .category-btn {
+      width: 100%;
+      padding: 12px;
+      margin: 4px 0;
+      background: transparent;
+      border: 2px solid #2a3741;
+      color: #ECE8E1;
+      cursor: pointer;
+      text-align: left;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .category-btn.active {
+      border-left-color: #FF4655;
+      background: #2a3741;
+    }
+
+    .weapon-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+      padding: 1.5rem;
+      overflow-y: auto;
+    }
+
+    .weapon-card {
+      background: #1F2731;
+      border: 2px solid #2a3741;
+      border-radius: 8px;
+      padding: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .weapon-card.affordable {
+      border-color: #FF4655;
+    }
+
+    .weapon-card.too-expensive {
+      opacity: 0.5;
+    }
+
+    .weapon-card.owned {
+      border-color: #4caf50;
+    }
+
+    .weapon-silhouette {
+      font-size: 2.5rem;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .weapon-name-small {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .weapon-price {
+      color: #FFD700;
+      font-weight: 700;
+    }
+
+    .weapon-stats {
+      font-size: 0.75rem;
+      color: #888;
+      margin: 0.25rem 0;
+    }
+
+    .fire-rate-bar {
+      height: 4px;
+      background: #2a3741;
+      margin: 0.5rem 0;
+      border-radius: 2px;
+    }
+
+    .fire-rate-fill {
+      height: 100%;
+      background: #FF4655;
+      border-radius: 2px;
+    }
+
+    .buy-weapon-btn {
+      width: 100%;
+      padding: 8px;
+      background: #FF4655;
+      border: none;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+
+    .buy-weapon-btn:disabled {
+      background: #3d4a55;
+      cursor: not-allowed;
+    }
+
+    .loadout-panel {
+      width: 280px;
+      background: #1F2731;
+      padding: 1.5rem;
+    }
+
+    .loadout-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .loadout-title {
+      font-size: 0.85rem;
+      color: #888;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+    }
+
+    .loadout-item {
+      background: #2a3741;
+      padding: 1rem;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .loadout-total {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 2px solid #2a3741;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #FFD700;
+    }
+
+    /* HUD */
+    #hud {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      display: none;
+      z-index: 50;
+    }
+
+    .hud-top {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1rem;
+    }
+
+    .score-display {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      font-size: 2.5rem;
+      font-weight: 900;
+    }
+
+    .team-score {
+      padding: 0.5rem 1.5rem;
+      border-radius: 4px;
+    }
+
+    .team-score.atk {
+      background: #FF4655;
+    }
+
+    .team-score.def {
+      background: #4a9eff;
+    }
+
+    .round-timer {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-top: 0.5rem;
+    }
+
+    .round-timer.low {
+      color: #FF4655;
+      animation: pulse 0.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .hud-top-left {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+    }
+
+    .player-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem;
+      margin: 0.25rem 0;
+      background: rgba(31, 39, 49, 0.8);
+      border-radius: 4px;
+      min-width: 200px;
+    }
+
+    .agent-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .hp-bar {
+      width: 80px;
+      height: 6px;
+      background: #2a3741;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .hp-fill {
+      height: 100%;
+      background: #4caf50;
+      transition: width 0.2s;
+    }
+
+    .hp-fill.low {
+      background: #FF4655;
+    }
+
+    .hud-top-right {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+    }
+
+    .kill-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      align-items: flex-end;
+    }
+
+    .kill-entry {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: rgba(31, 39, 49, 0.9);
+      border-radius: 4px;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .hud-bottom-left {
+      position: absolute;
+      bottom: 2rem;
+      left: 2rem;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .ability-slot {
+      width: 60px;
+      height: 60px;
+      background: rgba(31, 39, 49, 0.9);
+      border: 2px solid #2a3741;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .ability-key {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #FF4655;
+    }
+
+    .ability-status {
+      font-size: 0.7rem;
+      color: #888;
+    }
+
+    .cooldown-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 0%;
+      background: rgba(0, 0, 0, 0.7);
+      transition: height 0.1s;
+    }
+
+    .hud-bottom-center {
+      position: absolute;
+      bottom: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+
+    .weapon-name {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .ammo-display {
+      font-size: 2rem;
+      font-weight: 700;
+    }
+
+    .ammo-clip {
+      font-size: 2.5rem;
+    }
+
+    .ammo-separator {
+      color: #888;
+      margin: 0 0.5rem;
+    }
+
+    .ammo-reserve {
+      font-size: 1.5rem;
+      color: #888;
+    }
+
+    .hud-bottom-right {
+      position: absolute;
+      bottom: 2rem;
+      right: 2rem;
+      text-align: right;
+    }
+
+    .credits-display {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #FFD700;
+    }
+
+    .armor-display {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .self-hp-bar {
+      width: 200px;
+      height: 8px;
+      background: #2a3741;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    /* CROSSHAIR */
+    #crosshair {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 60;
+    }
+
+    .crosshair-line {
+      position: absolute;
+      background: #00ff00;
+      transition: all 0.05s;
+    }
+
+    .crosshair-horizontal {
+      height: 2px;
+      width: 16px;
+    }
+
+    .crosshair-vertical {
+      width: 2px;
+      height: 16px;
+    }
+
+    .crosshair-dot {
+      width: 4px;
+      height: 4px;
+      background: #00ff00;
+      border-radius: 50%;
+    }
+
+    /* DAMAGE NUMBERS */
+    .damage-number {
+      position: absolute;
+      font-weight: 700;
+      font-size: 1.5rem;
+      pointer-events: none;
+      animation: floatUp 0.8s ease-out forwards;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    }
+
+    .damage-body {
+      color: white;
+    }
+
+    .damage-head {
+      color: #FF4655;
+      font-size: 2rem;
+    }
+
+    .damage-legs {
+      color: #FFD700;
+    }
+
+    @keyframes floatUp {
+      0% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-60px) scale(1.2);
+        opacity: 0;
+      }
+    }
+
+    /* ROUND BANNER */
+    #round-banner {
+      position: absolute;
+      top: 30%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 4rem;
+      font-weight: 900;
+      letter-spacing: 8px;
+      text-transform: uppercase;
+      pointer-events: none;
+      z-index: 100;
+      animation: bannerFade 3s ease-out forwards;
+    }
+
+    @keyframes bannerFade {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+      }
+      20% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      80% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1.1);
+      }
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="game-canvas"></canvas>
+
+    <!-- MAIN MENU -->
+    <div id="main-menu">
+      <div class="logo">VALO<span>RANT</span></div>
+      <button class="menu-btn primary" id="play-btn">PLAY</button>
+      <button class="menu-btn" id="settings-btn">SETTINGS</button>
+      <button class="menu-btn">QUIT</button>
+    </div>
+
+    <!-- LOBBY SCREEN -->
+    <div id="lobby-screen">
+      <div class="lobby-header">
+        <div class="lobby-title">LOBBY</div>
+        <button class="menu-btn" id="back-to-menu">BACK</button>
+      </div>
+      <div class="room-list" id="room-list">
+        <!-- Rooms will be populated here -->
+      </div>
+      <button class="create-room-btn" id="create-room-btn">+ CREATE ROOM</button>
+    </div>
+
+    <!-- AGENT SELECT -->
+    <div id="agent-select">
+      <div class="agent-header">
+        <div class="lobby-title">SELECT YOUR AGENT</div>
+        <div class="agent-timer" id="agent-timer">60</div>
+      </div>
+      <div class="agent-grid" id="agent-grid">
+        <!-- Agents will be populated here -->
+      </div>
+      <div class="agent-footer">
+        <button class="lock-in-btn" id="lock-in-btn" disabled>LOCK IN</button>
+      </div>
+    </div>
+
+    <!-- BUY MENU -->
+    <div id="buy-menu">
+      <div class="buy-header">
+        <div class="lobby-title">BUY MENU</div>
+        <div class="buy-credits">CREDITS: <span id="buy-credits-value">0</span> ¢</div>
+        <button class="menu-btn" id="close-buy-menu">CLOSE</button>
+      </div>
+      <div class="buy-content">
+        <div class="buy-categories">
+          <button class="category-btn active" data-category="sidearms">SIDEARMS</button>
+          <button class="category-btn" data-category="smgs">SMGs</button>
+          <button class="category-btn" data-category="shotguns">SHOTGUNS</button>
+          <button class="category-btn" data-category="rifles">RIFLES</button>
+          <button class="category-btn" data-category="snipers">SNIPERS</button>
+          <button class="category-btn" data-category="lmgs">MACHINE GUNS</button>
+          <button class="category-btn" data-category="shields">SHIELDS</button>
+          <button class="category-btn" data-category="abilities">ABILITIES</button>
+        </div>
+        <div class="weapon-grid" id="weapon-grid">
+          <!-- Weapons will be populated here -->
+        </div>
+        <div class="loadout-panel">
+          <div class="loadout-section">
+            <div class="loadout-title">PRIMARY</div>
+            <div class="loadout-item" id="loadout-primary">CLASSIC</div>
+          </div>
+          <div class="loadout-section">
+            <div class="loadout-title">SECONDARY</div>
+            <div class="loadout-item" id="loadout-secondary">-</div>
+          </div>
+          <div class="loadout-section">
+            <div class="loadout-title">ARMOR</div>
+            <div class="loadout-item" id="loadout-armor">NONE</div>
+          </div>
+          <div class="loadout-total">TOTAL: <span id="loadout-total">0</span> ¢</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HUD -->
+    <div id="hud">
+      <div class="hud-top">
+        <div class="score-display">
+          <div class="team-score atk" id="score-atk">0</div>
+          <div class="team-score def" id="score-def">0</div>
+        </div>
+        <div class="round-timer" id="round-timer">1:40</div>
+      </div>
+
+      <div class="hud-top-left" id="hud-team-list">
+        <!-- Team list will be populated here -->
+      </div>
+
+      <div class="hud-top-right">
+        <div class="kill-feed" id="kill-feed">
+          <!-- Kill feed entries will appear here -->
+        </div>
+      </div>
+
+      <div class="hud-bottom-left" id="ability-bar">
+        <div class="ability-slot">
+          <div class="ability-key">C</div>
+          <div class="ability-status">READY</div>
+          <div class="cooldown-overlay" id="cooldown-c"></div>
+        </div>
+        <div class="ability-slot">
+          <div class="ability-key">Q</div>
+          <div class="ability-status">READY</div>
+          <div class="cooldown-overlay" id="cooldown-q"></div>
+        </div>
+        <div class="ability-slot">
+          <div class="ability-key">E</div>
+          <div class="ability-status">READY</div>
+          <div class="cooldown-overlay" id="cooldown-e"></div>
+        </div>
+        <div class="ability-slot">
+          <div class="ability-key">X</div>
+          <div class="ability-status">ULT READY</div>
+          <div class="cooldown-overlay" id="cooldown-x"></div>
+        </div>
+      </div>
+
+      <div class="hud-bottom-center">
+        <div class="weapon-name" id="hud-weapon-name">VANDAL</div>
+        <div class="ammo-display">
+          <span class="ammo-clip" id="ammo-clip">25</span>
+          <span class="ammo-separator">|</span>
+          <span class="ammo-reserve" id="ammo-reserve">75</span>
+        </div>
+      </div>
+
+      <div class="hud-bottom-right">
+        <div class="credits-display" id="credits-display">3900 ¢</div>
+        <div class="armor-display">
+          <span>🛡</span>
+          <span id="armor-value">50</span>
+        </div>
+        <div class="self-hp-bar">
+          <div class="hp-fill" id="self-hp-fill" style="width: 100%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CROSSHAIR -->
+    <div id="crosshair">
+      <div class="crosshair-line crosshair-horizontal" id="crosshair-left" style="left: -20px;"></div>
+      <div class="crosshair-line crosshair-horizontal" id="crosshair-right" style="left: 4px;"></div>
+      <div class="crosshair-line crosshair-vertical" id="crosshair-top" style="top: -20px;"></div>
+      <div class="crosshair-line crosshair-vertical" id="crosshair-bottom" style="top: 4px;"></div>
+      <div class="crosshair-dot" id="crosshair-dot"></div>
+    </div>
+
+    <!-- ROUND BANNER -->
+    <div id="round-banner" class="hidden"></div>
+  </div>
+
+  <script>
+    // ============================================
+    // WEAPON DATA
+    // ============================================
+    const WEAPONS = {
+      classic: { name: 'Classic', type: 'sidearm', price: 0, magSize: 12, reserve: 36, fireRate: 6.75, dmg: { head: 78, body: 26, legs: 22 }, reload: 1.75, auto: false, spread: 0.25 },
+      shorty: { name: 'Shorty', type: 'sidearm', price: 200, magSize: 2, reserve: 6, fireRate: 3.3, dmg: { head: 36, body: 12, legs: 10 }, reload: 1.75, pellets: 15 },
+      frenzy: { name: 'Frenzy', type: 'sidearm', price: 450, magSize: 13, reserve: 39, fireRate: 13, dmg: { head: 78, body: 26, legs: 22 }, reload: 1.6, auto: true },
+      ghost: { name: 'Ghost', type: 'sidearm', price: 500, magSize: 15, reserve: 45, fireRate: 6.75, dmg: { head: 105, body: 30, legs: 25 }, reload: 1.5, silenced: true },
+      sheriff: { name: 'Sheriff', type: 'sidearm', price: 800, magSize: 6, reserve: 24, fireRate: 4, dmg: { head: 160, body: 55, legs: 46 }, reload: 2.5 },
+      stinger: { name: 'Stinger', type: 'smg', price: 1100, magSize: 20, reserve: 60, fireRate: 18, dmg: { head: 67, body: 27, legs: 23 }, reload: 2.25, auto: true },
+      spectre: { name: 'Spectre', type: 'smg', price: 1600, magSize: 30, reserve: 90, fireRate: 13.33, dmg: { head: 78, body: 26, legs: 22 }, reload: 2.25, silenced: true, auto: true },
+      bucky: { name: 'Bucky', type: 'shotgun', price: 900, magSize: 5, reserve: 15, fireRate: 1.1, dmg: { head: 34, body: 34, legs: 29 }, reload: 2.5, pellets: 15 },
+      judge: { name: 'Judge', type: 'shotgun', price: 1850, magSize: 7, reserve: 21, fireRate: 3.5, dmg: { head: 34, body: 34, legs: 29 }, reload: 2.25, pellets: 12, auto: true },
+      bulldog: { name: 'Bulldog', type: 'rifle', price: 2050, magSize: 24, reserve: 72, fireRate: 9.15, dmg: { head: 116, body: 35, legs: 30 }, reload: 2.5, burstFire: true },
+      guardian: { name: 'Guardian', type: 'rifle', price: 2250, magSize: 12, reserve: 36, fireRate: 5.25, dmg: { head: 195, body: 65, legs: 49 }, reload: 2.5, semi: true },
+      phantom: { name: 'Phantom', type: 'rifle', price: 2900, magSize: 30, reserve: 90, fireRate: 11, dmg: { head: 156, body: 39, legs: 33 }, reload: 2.5, silenced: true, auto: true },
+      vandal: { name: 'Vandal', type: 'rifle', price: 2900, magSize: 25, reserve: 75, fireRate: 9.75, dmg: { head: 160, body: 40, legs: 34 }, reload: 2.5, auto: true },
+      marshal: { name: 'Marshal', type: 'sniper', price: 1100, magSize: 5, reserve: 20, fireRate: 1.5, dmg: { head: 202, body: 101, legs: 85 }, reload: 2.5, boltAction: true },
+      operator: { name: 'Operator', type: 'sniper', price: 4700, magSize: 5, reserve: 20, fireRate: 0.75, dmg: { head: 255, body: 150, legs: 127 }, reload: 3.7, boltAction: true },
+      ares: { name: 'Ares', type: 'lmg', price: 1600, magSize: 50, reserve: 100, fireRate: 13, dmg: { head: 72, body: 30, legs: 25 }, reload: 3.25, spinUp: true },
+      odin: { name: 'Odin', type: 'lmg', price: 3200, magSize: 100, reserve: 200, fireRate: 12, dmg: { head: 95, body: 38, legs: 32 }, reload: 5.0, spinUp: true }
+    };
+
+    const ARMOR = {
+      light_shield: { name: 'Light Shield', price: 400, armor: 25, maxArmor: 50 },
+      heavy_shield: { name: 'Heavy Shield', price: 1000, armor: 50, maxArmor: 100 }
+    };
+
+    // ============================================
+    // AGENT DATA
+    // ============================================
+    const AGENTS = {
+      jett: { name: 'Jett', role: 'duelist', color: '#7FB8E0', abilities: { C: 'Cloudburst', Q: 'Updraft', E: 'Tailwind', X: 'Blade Storm' } },
+      reyna: { name: 'Reyna', role: 'duelist', color: '#C9A6D9', abilities: { C: 'Leer', Q: 'Devour', E: 'Dismiss', X: 'Empress' } },
+      phoenix: { name: 'Phoenix', role: 'duelist', color: '#E67C3D', abilities: { C: 'Curveball', Q: 'Blaze', E: 'Hot Hands', X: 'Run It Back' } },
+      raze: { name: 'Raze', role: 'duelist', color: '#D96E4A', abilities: { C: 'Boom Bot', Q: 'Blast Pack', E: 'Paint Shells', X: 'Showstopper' } },
+      yoru: { name: 'Yoru', role: 'duelist', color: '#2D5D7C', abilities: { C: 'Fakeout', Q: 'Gatecrash', E: 'Blindside', X: 'Dimensional Drift' } },
+      neon: { name: 'Neon', role: 'duelist', color: '#4DE8F5', abilities: { C: 'Fast Lane', Q: 'Relay Bolt', E: 'High Gear', X: 'Overdrive' } },
+      iso: { name: 'Iso', role: 'duelist', color: '#1DB8B3', abilities: { C: 'Contingency', Q: 'Undercut', E: 'Double Tap', X: 'Kill Contract' } },
+      sova: { name: 'Sova', role: 'initiator', color: '#4A7FA6', abilities: { C: 'Shock Bolt', Q: 'Owl Drone', E: 'Recon Bolt', X: "Hunter's Fury" } },
+      breach: { name: 'Breach', role: 'initiator', color: '#D97E3D', abilities: { C: 'Aftershock', Q: 'Flashpoint', E: 'Fault Line', X: 'Rolling Thunder' } },
+      skye: { name: 'Skye', role: 'initiator', color: '#7CB86E', abilities: { C: 'Regrowth', Q: 'Trailblazer', E: 'Guiding Light', X: 'Seekers' } },
+      kayo: { name: 'KAY/O', role: 'initiator', color: '#5D6B7C', abilities: { C: 'FRAG/ment', Q: 'FLASH/drive', E: 'ZERO/point', X: 'NULL/cmd' } },
+      fade: { name: 'Fade', role: 'initiator', color: '#5D4A5D', abilities: { C: 'Seize', Q: 'Haunt', E: 'Prowler', X: 'Nightfall' } },
+      gekko: { name: 'Gekko', role: 'initiator', color: '#6BD97C', abilities: { C: 'Wingman', Q: 'Dizzy', E: 'Mosh Pit', X: 'Thrash' } },
+      brimstone: { name: 'Brimstone', role: 'controller', color: '#3D4A5D', abilities: { C: 'Incendiary', Q: 'Sky Smoke', E: 'Stim Beacon', X: 'Orbital Strike' } },
+      viper: { name: 'Viper', role: 'controller', color: '#4A7C5D', abilities: { C: 'Snake Bite', Q: 'Poison Cloud', E: 'Toxic Screen', X: "Viper's Pit" } },
+      omen: { name: 'Omen', role: 'controller', color: '#4A5D7C', abilities: { C: 'Shrouded Step', Q: 'Paranoia', E: 'Dark Cover', X: 'From the Shadows' } },
+      astra: { name: 'Astra', role: 'controller', color: '#7C4A7C', abilities: { C: 'Gravity Well', Q: 'Nova Pulse', E: 'Nebula', X: 'Cosmic Divide' } },
+      harbor: { name: 'Harbor', role: 'controller', color: '#4A7C8C', abilities: { C: 'Cove', Q: 'High Tide', E: 'Cascade', X: 'Reckoning' } },
+      sage: { name: 'Sage', role: 'sentinel', color: '#6ED9D9', abilities: { C: 'Barrier Orb', Q: 'Slow Orb', E: 'Healing Orb', X: 'Resurrection' } },
+      cypher: { name: 'Cypher', role: 'sentinel', color: '#7C6E4A', abilities: { C: 'Trapwire', Q: 'Cyber Cage', E: 'Spycam', X: 'Neural Theft' } },
+      killjoy: { name: 'Killjoy', role: 'sentinel', color: '#D9C94A', abilities: { C: 'Nanoswarm', Q: 'Alarmbot', E: 'Turret', X: 'Lockdown' } },
+      chamber: { name: 'Chamber', role: 'sentinel', color: '#7C5D4A', abilities: { C: 'Trademark', Q: 'Headhunter', E: 'Rendezvous', X: 'Tour de Force' } },
+      deadlock: { name: 'Deadlock', role: 'sentinel', color: '#5D7C8C', abilities: { C: 'Barrier Mesh', Q: 'Sonic Sensor', E: 'GravNet', X: 'Annihilation' } },
+      vyse: { name: 'Vyse', role: 'sentinel', color: '#8C4A7C', abilities: { C: 'Razorvine', Q: 'Arc Rose', E: 'Shear', X: 'Steel Garden' } }
+    };
+
+    // ============================================
+    // GAME ENGINE
+    // ============================================
+    class GameEngine {
+      constructor() {
+        this.canvas = document.getElementById('game-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.resize();
+        
+        this.gameState = {
+          phase: 'MENU',
+          round: 1,
+          timer: 100,
+          score: { atk: 0, def: 0 },
+          players: [],
+          localPlayerId: null,
+          spike: { planted: false, timer: null, pos: null }
+        };
+
+        this.player = {
+          x: 400,
+          y: 300,
+          angle: 0,
+          hp: 100,
+          armor: 50,
+          weapon: 'vandal',
+          ammo: { clip: 25, reserve: 75 },
+          credits: 3900,
+          agent: 'jett',
+          alive: true,
+          team: 'atk'
+        };
+
+        this.bots = [];
+        this.bullets = [];
+        this.effects = [];
+        this.kills = [];
+
+        this.keys = {};
+        this.mouse = { x: 0, y: 0, down: false };
+
+        this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        this.setupEventListeners();
+        this.initBots();
+        this.gameLoop();
+      }
+
+      resize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+      }
+
+      setupEventListeners() {
+        window.addEventListener('resize', () => this.resize());
+        
+        window.addEventListener('keydown', (e) => {
+          this.keys[e.key.toLowerCase()] = true;
+          
+          if (e.key === 'b' || e.key === 'B') {
+            if (this.gameState.phase === 'BUY') {
+              document.getElementById('buy-menu').classList.remove('hidden');
+              this.renderBuyMenu();
+            }
+          }
+          
+          if (e.key === 'Escape') {
+            document.getElementById('buy-menu').classList.add('hidden');
+          }
+        });
+
+        window.addEventListener('keyup', (e) => {
+          this.keys[e.key.toLowerCase()] = false;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+          if (document.pointerLockElement === this.canvas) {
+            this.player.angle += e.movementX * 0.002;
+          }
+        });
+
+        window.addEventListener('mousedown', (e) => {
+          if (e.button === 0) {
+            this.mouse.down = true;
+            if (document.pointerLockElement !== this.canvas && this.gameState.phase === 'ACTION') {
+              this.canvas.requestPointerLock();
+            }
+            this.shoot();
+          }
+        });
+
+        window.addEventListener('mouseup', () => {
+          this.mouse.down = false;
+        });
+
+        window.addEventListener('click', (e) => {
+          if (e.target.id === 'play-btn') {
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('lobby-screen').style.display = 'flex';
+            this.populateRoomList();
+          }
+          
+          if (e.target.id === 'back-to-menu') {
+            document.getElementById('lobby-screen').style.display = 'none';
+            document.getElementById('main-menu').style.display = 'flex';
+          }
+          
+          if (e.target.id === 'create-room-btn') {
+            this.startAgentSelect();
+          }
+          
+          if (e.target.id === 'lock-in-btn') {
+            this.startGame();
+          }
+          
+          if (e.target.id === 'close-buy-menu') {
+            document.getElementById('buy-menu').classList.add('hidden');
+            this.canvas.requestPointerLock();
+          }
+          
+          if (e.target.classList.contains('category-btn')) {
+            this.switchBuyCategory(e.target.dataset.category);
+          }
+        });
+      }
+
+      initBots() {
+        const botAgents = ['sova', 'sage', 'cypher', 'brimstone'];
+        for (let i = 0; i < 4; i++) {
+          this.bots.push({
+            id: `bot-${i}`,
+            x: 200 + Math.random() * 600,
+            y: 100 + Math.random() * 400,
+            angle: Math.random() * Math.PI * 2,
+            hp: 100,
+            armor: 50,
+            weapon: 'vandal',
+            agent: botAgents[i],
+            alive: true,
+            team: i < 2 ? 'atk' : 'def',
+            state: 'patrol',
+            targetX: null,
+            targetY: null,
+            lastShot: 0
+          });
+        }
+      }
+
+      populateRoomList() {
+        const roomList = document.getElementById('room-list');
+        roomList.innerHTML = `
+          <div class="room-item">
+            <div class="room-info">
+              <div class="room-name">Ranked Match #1</div>
+              <div class="room-map">ASCENT</div>
+              <div class="room-players">3/10</div>
+            </div>
+            <button class="join-btn">JOIN</button>
+          </div>
+          <div class="room-item">
+            <div class="room-info">
+              <div class="room-name">Casual Game</div>
+              <div class="room-map">BIND</div>
+              <div class="room-players">5/10</div>
+            </div>
+            <button class="join-btn">JOIN</button>
+          </div>
+          <div class="room-item">
+            <div class="room-info">
+              <div class="room-name">Practice Room</div>
+              <div class="room-map">HAVEN</div>
+              <div class="room-players">1/10</div>
+            </div>
+            <button class="join-btn">JOIN</button>
+          </div>
+        `;
+
+        roomList.querySelectorAll('.join-btn').forEach(btn => {
+          btn.addEventListener('click', () => this.startAgentSelect());
+        });
+      }
+
+      startAgentSelect() {
+        document.getElementById('lobby-screen').style.display = 'none';
+        document.getElementById('agent-select').style.display = 'flex';
+        this.renderAgentGrid();
+        
+        let timeLeft = 60;
+        const timerEl = document.getElementById('agent-timer');
+        const interval = setInterval(() => {
+          timeLeft--;
+          timerEl.textContent = timeLeft;
+          if (timeLeft <= 0) {
+            clearInterval(interval);
+            this.startGame();
+          }
+        }, 1000);
+      }
+
+      renderAgentGrid() {
+        const grid = document.getElementById('agent-grid');
+        grid.innerHTML = '';
+        
+        Object.entries(AGENTS).forEach(([key, agent]) => {
+          const card = document.createElement('div');
+          card.className = 'agent-card';
+          card.dataset.agent = key;
+          card.innerHTML = `
+            <div class="agent-portrait" style="color: ${agent.color}">●</div>
+            <div class="agent-name">${agent.name}</div>
+            <div class="agent-role">${agent.role}</div>
+          `;
+          
+          card.addEventListener('click', () => {
+            document.querySelectorAll('.agent-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            this.player.agent = key;
+            document.getElementById('lock-in-btn').disabled = false;
+          });
+          
+          grid.appendChild(card);
+        });
+      }
+
+      startGame() {
+        document.getElementById('agent-select').style.display = 'none';
+        document.getElementById('hud').style.display = 'block';
+        this.gameState.phase = 'BUY';
+        this.gameState.timer = 30;
+        
+        this.showRoundBanner('BUY PHASE');
+        this.updateHUD();
+        
+        setTimeout(() => {
+          this.gameState.phase = 'ACTION';
+          this.gameState.timer = 100;
+          this.showRoundBanner('ATTACK');
+        }, 5000);
+      }
+
+      showRoundBanner(text) {
+        const banner = document.getElementById('round-banner');
+        banner.textContent = text;
+        banner.classList.remove('hidden');
+        setTimeout(() => banner.classList.add('hidden'), 3000);
+      }
+
+      shoot() {
+        if (!this.player.alive || this.gameState.phase !== 'ACTION') return;
+        if (this.player.ammo.clip <= 0) {
+          this.reload();
+          return;
+        }
+
+        const weapon = WEAPONS[this.player.weapon];
+        this.player.ammo.clip--;
+        this.playShootSound(weapon);
+        this.updateHUD();
+
+        // Create bullet
+        const bullet = {
+          x: this.player.x,
+          y: this.player.y,
+          angle: this.player.angle,
+          damage: weapon.dmg.body,
+          owner: 'player',
+          spread: weapon.spread
+        };
+
+        // Apply spread
+        bullet.angle += (Math.random() - 0.5) * bullet.spread;
+
+        this.bullets.push(bullet);
+
+        // Check hits immediately for single shot weapons
+        if (!weapon.auto) {
+          this.checkBulletHit(bullet);
+        }
+      }
+
+      checkBulletHit(bullet) {
+        const range = 1000;
+        const hitX = bullet.x + Math.cos(bullet.angle) * range;
+        const hitY = bullet.y + Math.sin(bullet.angle) * range;
+
+        // Check bot hits
+        this.bots.forEach(bot => {
+          if (!bot.alive || bot.team === bullet.owner) return;
+
+          const dx = hitX - bot.x;
+          const dy = hitY - bot.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 30) {
+            // Headshot if close to center
+            const isHeadshot = dist < 15;
+            const damage = isHeadshot ? WEAPONS[this.player.weapon].dmg.head : bullet.damage;
+            
+            bot.hp -= damage;
+            this.showDamageNumber(damage, bot.x, bot.y, isHeadshot ? 'head' : 'body');
+            this.playHitSound(isHeadshot);
+
+            if (bot.hp <= 0) {
+              bot.alive = false;
+              this.addKillFeed(this.player.agent, bot.agent, this.player.weapon, isHeadshot);
+              this.player.credits += 200;
+            }
+
+            this.updateHUD();
+          }
+        });
+      }
+
+      showDamageNumber(damage, x, y, type) {
+        const canvas = document.getElementById('game-canvas');
+        const el = document.createElement('div');
+        el.className = `damage-number damage-${type}`;
+        el.textContent = damage;
+        el.style.left = (x / 800 * canvas.width) + 'px';
+        el.style.top = (y / 600 * canvas.height) + 'px';
+        document.getElementById('game-container').appendChild(el);
+        setTimeout(() => el.remove(), 800);
+      }
+
+      addKillFeed(killer, victim, weapon, headshot) {
+        const feed = document.getElementById('kill-feed');
+        const entry = document.createElement('div');
+        entry.className = 'kill-entry';
+        entry.innerHTML = `
+          <span>${killer}</span>
+          <span>🔫</span>
+          <span>${victim}${headshot ? ' 💀' : ''}</span>
+        `;
+        feed.appendChild(entry);
+        setTimeout(() => entry.remove(), 4000);
+      }
+
+      reload() {
+        const weapon = WEAPONS[this.player.weapon];
+        this.player.ammo.clip = weapon.magSize;
+        this.player.ammo.reserve = weapon.reserve;
+        this.playReloadSound();
+        this.updateHUD();
+      }
+
+      playShootSound(weapon) {
+        const osc = this.audioCtx.createOscillator();
+        const gain = this.audioCtx.createGain();
+        
+        osc.connect(gain);
+        gain.connect(this.audioCtx.destination);
+        
+        if (weapon.silenced) {
+          osc.frequency.value = 300;
+          gain.gain.setValueAtTime(0.3, this.audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, this.audioCtx.currentTime + 0.1);
+        } else {
+          osc.frequency.value = weapon.type === 'sniper' ? 80 : 600;
+          gain.gain.setValueAtTime(0.5, this.audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, this.audioCtx.currentTime + (weapon.type === 'sniper' ? 0.4 : 0.15));
+        }
+        
+        osc.start();
+        osc.stop(this.audioCtx.currentTime + 0.5);
+      }
+
+      playHitSound(headshot) {
+        const osc = this.audioCtx.createOscillator();
+        const gain = this.audioCtx.createGain();
+        
+        osc.connect(gain);
+        gain.connect(this.audioCtx.destination);
+        
+        osc.frequency.value = headshot ? 1200 : 800;
+        gain.gain.setValueAtTime(0.3, this.audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.audioCtx.currentTime + 0.1);
+        
+        osc.start();
+        osc.stop(this.audioCtx.currentTime + 0.15);
+      }
+
+      playReloadSound() {
+        const osc = this.audioCtx.createOscillator();
+        const gain = this.audioCtx.createGain();
+        
+        osc.connect(gain);
+        gain.connect(this.audioCtx.destination);
+        
+        osc.frequency.setValueAtTime(400, this.audioCtx.currentTime);
+        osc.frequency.setValueAtTime(600, this.audioCtx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.2, this.audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.audioCtx.currentTime + 0.3);
+        
+        osc.start();
+        osc.stop(this.audioCtx.currentTime + 0.3);
+      }
+
+      updatePlayer() {
+        const speed = 4;
+        let dx = 0, dy = 0;
+
+        if (this.keys['w']) dy -= speed;
+        if (this.keys['s']) dy += speed;
+        if (this.keys['a']) dx -= speed;
+        if (this.keys['d']) dx += speed;
+
+        this.player.x += dx;
+        this.player.y += dy;
+
+        // Map boundaries
+        this.player.x = Math.max(50, Math.min(750, this.player.x));
+        this.player.y = Math.max(50, Math.min(550, this.player.y));
+
+        // Update bots
+        this.updateBots();
+      }
+
+      updateBots() {
+        const now = Date.now();
+        this.bots.forEach(bot => {
+          if (!bot.alive) return;
+
+          // Simple AI: move towards player if close
+          const dx = this.player.x - bot.x;
+          const dy = this.player.y - bot.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 300 && bot.team !== this.player.team) {
+            // Aim at player
+            bot.angle = Math.atan2(dy, dx);
+            
+            // Shoot if in range and cooldown ready
+            if (dist < 200 && now - bot.lastShot > 500) {
+              bot.lastShot = now;
+              const weapon = WEAPONS[bot.weapon];
+              
+              // Check if hit
+              const hitChance = 0.3 + (300 - dist) / 1000;
+              if (Math.random() < hitChance) {
+                const damage = Math.random() < 0.2 ? weapon.dmg.head : weapon.dmg.body;
+                this.player.hp -= damage;
+                this.showDamageNumber(damage, this.player.x, this.player.y, damage === weapon.dmg.head ? 'head' : 'body');
+                
+                if (this.player.hp <= 0) {
+                  this.player.alive = false;
+                  this.player.hp = 0;
+                }
+                this.updateHUD();
+              }
+            }
+          } else {
+            // Patrol
+            if (!bot.targetX || Math.random() < 0.01) {
+              bot.targetX = 100 + Math.random() * 600;
+              bot.targetY = 100 + Math.random() * 350;
+            }
+            
+            const bdx = bot.targetX - bot.x;
+            const bdy = bot.targetY - bot.y;
+            bot.angle = Math.atan2(bdy, bdx);
+            bot.x += Math.cos(bot.angle) * 2;
+            bot.y += Math.sin(bot.angle) * 2;
+          }
+        });
+      }
+
+      updateBullets() {
+        this.bullets.forEach((bullet, index) => {
+          bullet.x += Math.cos(bullet.angle) * 20;
+          bullet.y += Math.sin(bullet.angle) * 20;
+
+          // Remove if out of bounds
+          if (bullet.x < 0 || bullet.x > 800 || bullet.y < 0 || bullet.y > 600) {
+            this.bullets.splice(index, 1);
+          }
+        });
+      }
+
+      render() {
+        // Clear
+        this.ctx.fillStyle = '#1F2731';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Draw map (top-down view)
+        this.drawMap();
+
+        // Draw bots
+        this.bots.forEach(bot => {
+          if (!bot.alive) return;
+          this.drawEntity(bot.x, bot.y, bot.angle, AGENTS[bot.agent].color, 'enemy');
+        });
+
+        // Draw player
+        if (this.player.alive) {
+          this.drawEntity(this.player.x, this.player.y, this.player.angle, AGENTS[this.player.agent].color, 'player');
+        }
+
+        // Draw bullets
+        this.ctx.strokeStyle = '#FFD700';
+        this.ctx.lineWidth = 2;
+        this.bullets.forEach(bullet => {
+          this.ctx.beginPath();
+          this.ctx.moveTo(bullet.x, bullet.y);
+          this.ctx.lineTo(
+            bullet.x - Math.cos(bullet.angle) * 10,
+            bullet.y - Math.sin(bullet.angle) * 10
+          );
+          this.ctx.stroke();
+        });
+
+        // Draw effects
+        this.effects.forEach((effect, index) => {
+          if (effect.type === 'smoke') {
+            this.ctx.fillStyle = 'rgba(100, 100, 100, 0.5)';
+            this.ctx.beginPath();
+            this.ctx.arc(effect.x, effect.y, effect.radius, 0, Math.PI * 2);
+            this.ctx.fill();
+            effect.ttl -= 0.016;
+            if (effect.ttl <= 0) this.effects.splice(index, 1);
+          }
+        });
+      }
+
+      drawMap() {
+        const ctx = this.ctx;
+        const scaleX = this.canvas.width / 800;
+        const scaleY = this.canvas.height / 600;
+
+        ctx.save();
+        ctx.scale(scaleX, scaleY);
+
+        // Ground
+        ctx.fillStyle = '#2a3741';
+        ctx.fillRect(0, 0, 800, 600);
+
+        // Walls
+        ctx.fillStyle = '#3d4a55';
+        ctx.fillRect(0, 0, 800, 20);
+        ctx.fillRect(0, 580, 800, 20);
+        ctx.fillRect(0, 0, 20, 600);
+        ctx.fillRect(780, 0, 20, 600);
+
+        // A Site
+        ctx.fillStyle = '#4a3d3d';
+        ctx.fillRect(600, 50, 150, 150);
+        ctx.fillStyle = '#ECE8E1';
+        ctx.font = 'bold 24px Arial';
+        ctx.fillText('A', 665, 135);
+
+        // B Site
+        ctx.fillStyle = '#3d4a3d';
+        ctx.fillRect(50, 400, 150, 150);
+        ctx.fillStyle = '#ECE8E1';
+        ctx.fillText('B', 115, 485);
+
+        // Mid boxes
+        ctx.fillStyle = '#5d4a3d';
+        ctx.fillRect(350, 250, 100, 100);
+        ctx.fillRect(200, 350, 80, 80);
+
+        ctx.restore();
+      }
+
+      drawEntity(x, y, angle, color, type) {
+        const ctx = this.ctx;
+        const scaleX = this.canvas.width / 800;
+        const scaleY = this.canvas.height / 600;
+
+        ctx.save();
+        ctx.translate(x * scaleX, y * scaleY);
+        ctx.rotate(angle);
+
+        // Body
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(0, 0, 15 * scaleX, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Direction indicator
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.moveTo(10 * scaleX, 0);
+        ctx.lineTo(20 * scaleX, -5 * scaleY);
+        ctx.lineTo(20 * scaleX, 5 * scaleY);
+        ctx.fill();
+
+        // HP bar
+        ctx.fillStyle = '#2a3741';
+        ctx.fillRect(-20 * scaleX, -25 * scaleY, 40 * scaleX, 4 * scaleY);
+        ctx.fillStyle = type === 'enemy' ? '#FF4655' : '#4caf50';
+        ctx.fillRect(-20 * scaleX, -25 * scaleY, 40 * scaleX, 4 * scaleY);
+
+        ctx.restore();
+      }
+
+      renderBuyMenu() {
+        this.renderWeapons('rifles');
+      }
+
+      switchBuyCategory(category) {
+        document.querySelectorAll('.category-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.category === category);
+        });
+        this.renderWeapons(category);
+      }
+
+      renderWeapons(category) {
+        const grid = document.getElementById('weapon-grid');
+        grid.innerHTML = '';
+
+        let items = [];
+        if (category === 'shields') {
+          items = Object.entries(ARMOR).map(([key, item]) => [key, { ...item, type: 'shield' }]);
+        } else {
+          items = Object.entries(WEAPONS).filter(([_, w]) => w.type === category.slice(0, -1));
+        }
+
+        items.forEach(([key, weapon]) => {
+          const card = document.createElement('div');
+          card.className = 'weapon-card';
+          const canAfford = this.player.credits >= weapon.price;
+          if (canAfford) card.classList.add('affordable');
+          else card.classList.add('too-expensive');
+
+          card.innerHTML = `
+            <div class="weapon-silhouette">🔫</div>
+            <div class="weapon-name-small">${weapon.name}</div>
+            <div class="weapon-price">${weapon.price} ¢</div>
+            ${weapon.type !== 'shield' ? `
+            <div class="weapon-stats">❤ ${weapon.dmg.head} 💨 ${weapon.dmg.body}</div>
+            <div class="weapon-stats">Mag ${weapon.magSize}</div>
+            <div class="fire-rate-bar"><div class="fire-rate-fill" style="width: ${Math.min(100, weapon.fireRate * 5)}%"></div></div>
+            ` : ''}
+            <button class="buy-weapon-btn" ${!canAfford ? 'disabled' : ''}>PURCHASE</button>
+          `;
+
+          card.querySelector('.buy-weapon-btn').addEventListener('click', () => {
+            if (canAfford) {
+              this.player.credits -= weapon.price;
+              if (weapon.type === 'shield') {
+                this.player.armor = weapon.armor;
+              } else {
+                this.player.weapon = key;
+                this.player.ammo = { clip: weapon.magSize, reserve: weapon.reserve };
+              }
+              this.updateHUD();
+              this.renderWeapons(category);
+            }
+          });
+
+          grid.appendChild(card);
+        });
+      }
+
+      updateHUD() {
+        document.getElementById('score-atk').textContent = this.gameState.score.atk;
+        document.getElementById('score-def').textContent = this.gameState.score.def;
+        
+        const timerEl = document.getElementById('round-timer');
+        const mins = Math.floor(this.gameState.timer / 60);
+        const secs = Math.floor(this.gameState.timer % 60);
+        timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+        timerEl.classList.toggle('low', this.gameState.timer < 30);
+
+        document.getElementById('ammo-clip').textContent = this.player.ammo.clip;
+        document.getElementById('ammo-reserve').textContent = this.player.ammo.reserve;
+        document.getElementById('hud-weapon-name').textContent = WEAPONS[this.player.weapon]?.name || this.player.weapon;
+        document.getElementById('credits-display').textContent = `${this.player.credits.toLocaleString()} ¢`;
+        document.getElementById('armor-value').textContent = this.player.armor;
+        
+        const hpPercent = (this.player.hp / 100) * 100;
+        const hpFill = document.getElementById('self-hp-fill');
+        hpFill.style.width = `${hpPercent}%`;
+        hpFill.classList.toggle('low', this.player.hp < 30);
+      }
+
+      gameLoop() {
+        this.updatePlayer();
+        this.updateBullets();
+        this.render();
+
+        // Game timer
+        if (this.gameState.phase === 'BUY' || this.gameState.phase === 'ACTION') {
+          this.gameState.timer -= 0.016;
+          if (this.gameState.timer <= 0) {
+            this.endRound('def');
+          }
+          this.updateHUD();
+        }
+
+        requestAnimationFrame(() => this.gameLoop());
+      }
+
+      endRound(winner) {
+        this.gameState.phase = 'POST_ROUND';
+        if (winner === 'atk') this.gameState.score.atk++;
+        else this.gameState.score.def++;
+        
+        this.showRoundBanner(winner === 'atk' ? 'ROUND WON' : 'ROUND LOST');
+        
+        setTimeout(() => {
+          this.gameState.round++;
+          this.gameState.phase = 'BUY';
+          this.gameState.timer = 30;
+          this.player.hp = 100;
+          this.player.ammo = { clip: 25, reserve: 75 };
+          this.player.credits += winner === 'atk' ? 3000 : 1900;
+          this.bots.forEach(bot => {
+            bot.alive = true;
+            bot.hp = 100;
+            bot.x = 200 + Math.random() * 600;
+            bot.y = 100 + Math.random() * 400;
+          });
+          this.updateHUD();
+        }, 5000);
+      }
+    }
+
+    // Start game when page loads
+    window.addEventListener('load', () => {
+      window.game = new GameEngine();
+    });
+  </script>
+</body>
+</html>

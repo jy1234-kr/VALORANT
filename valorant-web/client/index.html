@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VALORANT WEB</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <!-- Main Menu -->
+  <div id="main-menu" class="screen active">
+    <div class="logo">
+      <h1>VALORANT<span class="red">WEB</span></h1>
+    </div>
+    <div class="menu-buttons">
+      <button id="play-btn" class="menu-btn">PLAY</button>
+      <button id="settings-btn" class="menu-btn">SETTINGS</button>
+      <button id="quit-btn" class="menu-btn disabled">QUIT</button>
+    </div>
+    <div class="version">v1.0.0</div>
+  </div>
+
+  <!-- Lobby Screen -->
+  <div id="lobby-screen" class="screen">
+    <div class="lobby-header">
+      <h2>FIND A GAME</h2>
+      <button id="back-to-menu" class="small-btn">← BACK</button>
+    </div>
+    <div class="room-list-container">
+      <div class="room-list-header">
+        <span>Room Name</span>
+        <span>Map</span>
+        <span>Players</span>
+        <span>Status</span>
+        <span>Action</span>
+      </div>
+      <div id="room-list" class="room-list"></div>
+    </div>
+    <button id="create-room-btn" class="menu-btn primary">CREATE ROOM</button>
+  </div>
+
+  <!-- Create Room Modal -->
+  <div id="create-room-modal" class="modal">
+    <div class="modal-content">
+      <h3>Create New Room</h3>
+      <div class="form-group">
+        <label>Room Name</label>
+        <input type="text" id="room-name-input" placeholder="My Awesome Room" maxlength="20" />
+      </div>
+      <div class="form-group">
+        <label>Map</label>
+        <select id="map-select">
+          <option value="ascent">Ascent</option>
+          <option value="bind">Bind</option>
+          <option value="haven">Haven</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Max Players (2-10)</label>
+        <input type="number" id="max-players-input" min="2" max="10" value="5" />
+      </div>
+      <div class="modal-buttons">
+        <button id="confirm-create-room" class="menu-btn primary">CONFIRM</button>
+        <button id="cancel-create-room" class="menu-btn">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Agent Select Screen -->
+  <div id="agent-select-screen" class="screen">
+    <div class="agent-select-header">
+      <div class="team-info left">
+        <h3>ATTACKERS</h3>
+        <div id="atk-team-agents" class="team-agents"></div>
+      </div>
+      <div class="timer-container">
+        <h2>SELECT YOUR AGENT</h2>
+        <div id="agent-timer" class="countdown">60</div>
+      </div>
+      <div class="team-info right">
+        <h3>DEFENDERS</h3>
+        <div id="def-team-agents" class="team-agents"></div>
+      </div>
+    </div>
+    <div class="agent-grid" id="agent-grid"></div>
+    <div class="agent-preview" id="agent-preview">
+      <div class="preview-image"></div>
+      <div class="preview-info">
+        <h4 id="preview-name">Agent Name</h4>
+        <p id="preview-role">Role</p>
+        <div class="abilities-preview">
+          <div class="ability-slot"><span class="key">C</span><span id="preview-c">Ability</span></div>
+          <div class="ability-slot"><span class="key">Q</span><span id="preview-q">Ability</span></div>
+          <div class="ability-slot"><span class="key">E</span><span id="preview-e">Ability</span></div>
+          <div class="ability-slot"><span class="key">X</span><span id="preview-x">Ultimate</span></div>
+        </div>
+      </div>
+    </div>
+    <button id="lock-in-btn" class="menu-btn primary" disabled>LOCK IN</button>
+  </div>
+
+  <!-- Game Canvas Container -->
+  <div id="game-container" class="screen">
+    <canvas id="game-canvas"></canvas>
+    
+    <!-- HUD Elements -->
+    <div id="hud" class="hud hidden">
+      <!-- Top Center: Score & Timer -->
+      <div class="score-panel">
+        <div class="score-display">
+          <span id="atk-score" class="score atk">0</span>
+          <span class="score-divider">—</span>
+          <span id="def-score" class="score def">0</span>
+        </div>
+        <div id="round-number" class="round-info">Round 1</div>
+        <div id="round-timer" class="timer">01:40</div>
+        <div id="spike-status" class="spike-status hidden">SPIKE PLANTED</div>
+        <div id="spike-timer" class="spike-timer hidden">45.0</div>
+      </div>
+
+      <!-- Top Left: Team List -->
+      <div class="team-panel left-panel">
+        <div id="atk-team-list" class="team-list"></div>
+      </div>
+
+      <!-- Top Right: Kill Feed -->
+      <div id="kill-feed" class="kill-feed"></div>
+
+      <!-- Bottom Left: Abilities -->
+      <div class="abilities-panel">
+        <div class="ability-slot-large" data-key="C">
+          <div class="ability-key">C</div>
+          <div class="ability-icon" id="ability-c-icon"></div>
+          <div class="ability-cost" id="ability-c-cost">200</div>
+          <div class="cooldown-overlay" id="ability-c-cooldown"></div>
+        </div>
+        <div class="ability-slot-large" data-key="Q">
+          <div class="ability-key">Q</div>
+          <div class="ability-icon" id="ability-q-icon"></div>
+          <div class="ability-cost" id="ability-q-cost">150</div>
+          <div class="cooldown-overlay" id="ability-q-cooldown"></div>
+        </div>
+        <div class="ability-slot-large" data-key="E">
+          <div class="ability-key">E</div>
+          <div class="ability-icon" id="ability-e-icon"></div>
+          <div class="ability-cost" id="ability-e-cost">READY</div>
+          <div class="cooldown-overlay" id="ability-e-cooldown"></div>
+        </div>
+        <div class="ability-slot-large ult" data-key="X">
+          <div class="ability-key">X</div>
+          <div class="ability-icon" id="ability-x-icon"></div>
+          <div class="ability-cost" id="ability-x-cost">7 PTS</div>
+          <div class="cooldown-overlay" id="ability-x-cooldown"></div>
+        </div>
+      </div>
+
+      <!-- Bottom Center: Weapon & Ammo -->
+      <div class="weapon-panel">
+        <div id="weapon-name" class="weapon-name">VANDAL</div>
+        <div class="ammo-display">
+          <span id="ammo-clip" class="ammo-clip">25</span>
+          <span class="ammo-separator">|</span>
+          <span id="ammo-reserve" class="ammo-reserve">75</span>
+        </div>
+        <div class="ammo-bar">
+          <div id="ammo-bar-fill" class="ammo-bar-fill"></div>
+        </div>
+      </div>
+
+      <!-- Bottom Right: Credits & Health -->
+      <div class="status-panel">
+        <div id="credits-display" class="credits">3900 ¢</div>
+        <div class="health-armor">
+          <div class="health-bar">
+            <div id="health-fill" class="health-fill"></div>
+            <span id="health-text" class="health-text">100</span>
+          </div>
+          <div class="armor-indicator">
+            <span id="armor-value">50</span>
+            <span class="armor-icon">🛡</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Crosshair -->
+      <div id="crosshair" class="crosshair">
+        <div class="crosshair-line horizontal left"></div>
+        <div class="crosshair-line horizontal right"></div>
+        <div class="crosshair-line vertical top"></div>
+        <div class="crosshair-line vertical bottom"></div>
+        <div class="crosshair-dot"></div>
+      </div>
+
+      <!-- Damage Numbers Container -->
+      <div id="damage-numbers" class="damage-numbers"></div>
+
+      <!-- Buy Menu Overlay -->
+      <div id="buy-menu" class="buy-menu hidden">
+        <div class="buy-menu-header">
+          <h3>BUY MENU</h3>
+          <div class="buy-credits">CREDITS: <span id="buy-credits-value">3,900</span> ¢</div>
+          <div class="buy-timer" id="buy-timer">0:30</div>
+          <button id="close-buy-menu" class="close-btn">×</button>
+        </div>
+        <div class="buy-menu-body">
+          <div class="buy-categories">
+            <button class="category-btn active" data-category="sidearms">SIDEARMS</button>
+            <button class="category-btn" data-category="smgs">SMGs</button>
+            <button class="category-btn" data-category="shotguns">SHOTGUNS</button>
+            <button class="category-btn" data-category="rifles">RIFLES</button>
+            <button class="category-btn" data-category="snipers">SNIPERS</button>
+            <button class="category-btn" data-category="lmgs">LMGs</button>
+            <button class="category-btn" data-category="shields">SHIELDS</button>
+            <button class="category-btn" data-category="abilities">ABILITIES</button>
+          </div>
+          <div class="weapon-grid" id="weapon-grid"></div>
+          <div class="my-loadout">
+            <h4>MY LOADOUT</h4>
+            <div class="loadout-primary">
+              <span>PRIMARY</span>
+              <div id="loadout-primary" class="loadout-item">CLASSIC</div>
+            </div>
+            <div class="loadout-secondary">
+              <span>SECONDARY</span>
+              <div id="loadout-secondary" class="loadout-item">-</div>
+            </div>
+            <div class="loadout-armor">
+              <span>ARMOR</span>
+              <div id="loadout-armor" class="loadout-item">NONE</div>
+            </div>
+            <div class="loadout-total">
+              <span>TOTAL:</span>
+              <span id="loadout-total">0</span> ¢
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scoreboard (TAB) -->
+      <div id="scoreboard" class="scoreboard hidden">
+        <div class="scoreboard-header">
+          <span id="scoreboard-map">ASCENT</span>
+          <span class="scoreboard-score">
+            <span id="scoreboard-atk">0</span> — <span id="scoreboard-def">0</span>
+          </span>
+          <span id="scoreboard-round">Round 1</span>
+        </div>
+        <div class="scoreboard-body">
+          <div class="scoreboard-section">
+            <h4>ATTACKERS</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th>Agent</th>
+                  <th>Name</th>
+                  <th>ACS</th>
+                  <th>K</th>
+                  <th>D</th>
+                  <th>A</th>
+                  <th>HS%</th>
+                  <th>Credits</th>
+                </tr>
+              </thead>
+              <tbody id="scoreboard-atk-body"></tbody>
+            </table>
+          </div>
+          <div class="scoreboard-section">
+            <h4>DEFENDERS</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th>Agent</th>
+                  <th>Name</th>
+                  <th>ACS</th>
+                  <th>K</th>
+                  <th>D</th>
+                  <th>A</th>
+                  <th>HS%</th>
+                  <th>Credits</th>
+                </tr>
+              </thead>
+              <tbody id="scoreboard-def-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Menu (ESC) -->
+      <div id="settings-menu" class="settings-menu hidden">
+        <div class="settings-header">
+          <h3>SETTINGS</h3>
+          <button id="close-settings" class="close-btn">×</button>
+        </div>
+        <div class="settings-tabs">
+          <button class="tab-btn active" data-tab="general">GENERAL</button>
+          <button class="tab-btn" data-tab="video">VIDEO</button>
+          <button class="tab-btn" data-tab="audio">AUDIO</button>
+          <button class="tab-btn" data-tab="crosshair">CROSSHAIR</button>
+        </div>
+        <div class="settings-content">
+          <div id="settings-general" class="settings-panel active">
+            <div class="setting-row">
+              <label>Sensitivity</label>
+              <input type="range" id="sensitivity-slider" min="0.1" max="5.0" step="0.1" value="1.0" />
+              <span id="sensitivity-value">1.0</span>
+            </div>
+            <div class="setting-row">
+              <label>Show FPS</label>
+              <input type="checkbox" id="fps-toggle" />
+            </div>
+          </div>
+          <div id="settings-video" class="settings-panel">
+            <div class="setting-row">
+              <label>Quality</label>
+              <select id="quality-select">
+                <option value="low">Low</option>
+                <option value="medium" selected>Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+            <div class="setting-row">
+              <label>FOV</label>
+              <input type="range" id="fov-slider" min="80" max="110" step="5" value="90" />
+              <span id="fov-value">90</span>
+            </div>
+          </div>
+          <div id="settings-audio" class="settings-panel">
+            <div class="setting-row">
+              <label>Master Volume</label>
+              <input type="range" id="master-vol" min="0" max="100" value="80" />
+            </div>
+            <div class="setting-row">
+              <label>SFX Volume</label>
+              <input type="range" id="sfx-vol" min="0" max="100" value="100" />
+            </div>
+            <div class="setting-row">
+              <label>Voice Volume</label>
+              <input type="range" id="voice-vol" min="0" max="100" value="80" />
+            </div>
+          </div>
+          <div id="settings-crosshair" class="settings-panel">
+            <div class="setting-row">
+              <label>Style</label>
+              <select id="crosshair-style">
+                <option value="cross">Cross</option>
+                <option value="dot">Dot</option>
+                <option value="circle">Circle</option>
+              </select>
+            </div>
+            <div class="setting-row">
+              <label>Color</label>
+              <input type="color" id="crosshair-color" value="#00ff00" />
+            </div>
+            <div class="setting-row">
+              <label>Size</label>
+              <input type="range" id="crosshair-size" min="1" max="10" value="4" />
+            </div>
+          </div>
+        </div>
+        <button id="save-settings" class="menu-btn primary">SAVE</button>
+      </div>
+
+      <!-- Round Start Banner -->
+      <div id="round-banner" class="round-banner hidden">
+        <h1 id="round-banner-text">ATTACK</h1>
+      </div>
+
+      <!-- Death Screen -->
+      <div id="death-screen" class="death-screen hidden">
+        <h2>YOU DIED</h2>
+        <p>Killed by <span id="killer-name">Enemy</span></p>
+        <p>Spectating teammate...</p>
+      </div>
+
+      <!-- End of Round Screen -->
+      <div id="round-end-screen" class="round-end-screen hidden">
+        <h1 id="round-end-result">VICTORY</h1>
+        <div class="round-end-stats">
+          <div class="stat"><span>Kills:</span><span id="round-kills">0</span></div>
+          <div class="stat"><span>Damage:</span><span id="round-damage">0</span></div>
+          <div class="stat"><span>Credits Earned:</span><span id="round-credits">0</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

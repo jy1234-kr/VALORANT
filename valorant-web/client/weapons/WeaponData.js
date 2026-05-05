@@ -323,6 +323,5 @@ const RECOIL_PATTERNS = {
   }
 };
 
-module.exports = WEAPONS;
-module.exports.ARMOR = ARMOR;
-module.exports.RECOIL_PATTERNS = RECOIL_PATTERNS;
+// Export all as ES6 modules
+export { WEAPONS, ARMOR, RECOIL_PATTERNS };

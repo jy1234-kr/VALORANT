@@ -1,8 +1,11 @@
-cat > .gitignore << 'EOF'
+valorant-web-game-recreation-eb631
+Nothing needs to be added to .gitignore since only a single HTML file was added without any build artifacts, dependencies, or temporary files.
+=======
+```
 # Dependencies
 node_modules/
 
-# Environment variables
+# Environment
 .env
 .env.local
 .env.*
@@ -10,8 +13,6 @@ node_modules/
 # Logs and temp files
 *.log
 *.tmp
-*.swp
-*.swo
 
 # Editors
 .vscode/
@@ -25,16 +26,35 @@ __pycache__/
 .Python
 venv/
 .venv/
+env/
+ENV/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git/modules/
+*.sublime-workspace
+.pytest_cache/
+.mypy_cache/
+.hypothesis/
 
-# Build outputs
+# Node.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+node_modules/
 dist/
 build/
-
-# OS generated
-.DS_Store
-Thumbs.db
-
-# Coverage
+.nyc_output
 coverage/
 .nyc_output/
-EOF
+coverage/
+build/
+dist/
+```
